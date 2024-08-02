@@ -1,38 +1,65 @@
 'use client'
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { firestore } from "@/firebase";
-import { Box, Modal, Stack, Typography, TextField, Button, Container, Paper, InputAdornment } from "@mui/material";
-import { collection, deleteDoc, doc, getDocs, query, getDoc, setDoc } from "firebase/firestore";
-import SearchIcon from '@mui/icons-material/Search';
+import {
+  Box,
+  Modal,
+  Stack,
+  Typography,
+  TextField,
+  Button,
+  Container,
+  Paper,
+  InputAdornment,
+  Card,
+  CardContent,
+  CardActions,
+  IconButton,
+} from "@mui/material";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
+import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 
 export default function Home() {
   const [inventory, setInventory] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); 
   const [itemName, setItemName] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");  // State for search query
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Function to update inventory
+  // Function to update inventory by fetching data from Firestore
   const updateInventory = async () => {
-    const snapShot = query(collection(firestore, 'inventory'));
+    const snapShot = query(collection(firestore, "inventory"));
     const docs = await getDocs(snapShot);
     const inventoryList = [];
-    docs.forEach(doc => {
+
+    docs.forEach((doc) => {
       inventoryList.push({
         name: doc.id,
         ...doc.data(),
       });
     });
+
     setInventory(inventoryList);
   };
 
-  // Function to remove an item
+  // Function to remove an item from the inventory
   const removeItem = async (item) => {
     const docRef = doc(collection(firestore, "inventory"), item);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       const { quantity } = docSnap.data();
+
+      // If quantity is 1, delete the document; otherwise, decrease quantity by 1
       if (quantity === 1) {
         await deleteDoc(docRef);
       } else {
@@ -43,11 +70,12 @@ export default function Home() {
     await updateInventory();
   };
 
-  // Function to add an item
+  // Function to add an item to the inventory
   const addItem = async (item) => {
     const docRef = doc(collection(firestore, "inventory"), item);
     const docSnap = await getDoc(docRef);
 
+    // If the item exists, increase quantity by 1; otherwise, set quantity to 1
     if (docSnap.exists()) {
       const { quantity } = docSnap.data();
       await setDoc(docRef, { quantity: quantity + 1 });
@@ -66,19 +94,18 @@ export default function Home() {
   const handleClose = () => setOpen(false);
 
   // Filter inventory based on search query
-  const filteredInventory = inventory.filter(item =>
+  const filteredInventory = inventory.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="md" sx={{ marginTop: "2rem" }}>
       <Box
         display="flex"
         flexDirection="column"
         justifyContent="center"
         alignItems="center"
         gap={2}
-        mt={5}
       >
         {/* Modal for adding items */}
         <Modal open={open} onClose={handleClose}>
@@ -95,19 +122,19 @@ export default function Home() {
             flexDirection="column"
             gap={3}
             sx={{
-              transform: 'translate(-50%, -50%)',
+              transform: "translate(-50%, -50%)",
             }}
           >
-            <Typography variant="h6" fontWeight="bold">Add New Item</Typography>
+            <Typography variant="h6" fontWeight="bold">
+              Add New Item
+            </Typography>
             <Stack direction="row" spacing={2}>
               <TextField
                 variant="outlined"
                 fullWidth
                 placeholder="Enter item name"
                 value={itemName}
-                onChange={(e) => {
-                  setItemName(e.target.value);
-                }}
+                onChange={(e) => setItemName(e.target.value)}
               />
               <Button
                 variant="contained"
@@ -125,12 +152,7 @@ export default function Home() {
         </Modal>
 
         {/* Add New Item Button */}
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={handleOpen}
-          size="large"
-        >
+        <Button variant="contained" color="secondary" onClick={handleOpen}>
           Add New Item
         </Button>
 
@@ -141,7 +163,7 @@ export default function Home() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           fullWidth
-          sx={{ mb: 3 }}
+          sx={{ marginTop: "1rem", marginBottom: "1rem" }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -152,57 +174,48 @@ export default function Home() {
         />
 
         {/* Inventory Items Display */}
-        <Paper elevation={3} sx={{ width: '100%', mt: 3 }}>
-          <Box
-            bgcolor="#ADD8E6"
-            p={2}
-            textAlign="center"
-          >
-            <Typography variant="h4" fontWeight="bold" color="#333">
-              Inventory Items
-            </Typography>
-          </Box>
-          <Stack spacing={2} sx={{ p: 2, maxHeight: 500, overflow: 'auto' }}>
-            {filteredInventory.map(({ name, quantity }) => (
-              <Box
-                key={name}
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                bgcolor="#f0f0f0"
-                p={2}
-                borderRadius={1}
-              >
-                <Typography variant="h5" color="#333">
+        <Box
+          display="grid"
+          gridTemplateColumns="repeat(auto-fill, minmax(200px, 1fr))"
+          gap={2}
+          sx={{ width: "100%", marginTop: "1rem" }}
+        >
+          {filteredInventory.map(({ name, quantity }) => (
+            <Card
+              key={name}
+              sx={{
+                backgroundColor: "#f8f9fa",
+                borderRadius: "8px",
+                boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{ color: "#333" }}
+                >
                   {name.charAt(0).toUpperCase() + name.slice(1)}
                 </Typography>
-                <Typography variant="h5" color="#333">
+                <Typography variant="body1" sx={{ color: "#555" }}>
                   Quantity: {quantity}
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => {
-                      addItem(name);
-                    }}
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => {
-                      removeItem(name);
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </Stack>
-              </Box>
-            ))}
-          </Stack>
-        </Paper>
+              </CardContent>
+              <CardActions>
+                <IconButton
+                  color="primary"
+                  onClick={() => addItem(name)}
+                  sx={{ marginRight: "auto" }}
+                >
+                  <AddIcon />
+                </IconButton>
+                <IconButton color="error" onClick={() => removeItem(name)}>
+                  <RemoveIcon />
+                </IconButton>
+              </CardActions>
+            </Card>
+          ))}
+        </Box>
       </Box>
     </Container>
   );
