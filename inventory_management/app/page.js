@@ -2,13 +2,15 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { firestore } from "@/firebase";
-import { Box, Modal, Stack, Typography, TextField, Button, Container, Paper } from "@mui/material";
+import { Box, Modal, Stack, Typography, TextField, Button, Container, Paper, InputAdornment } from "@mui/material";
 import { collection, deleteDoc, doc, getDocs, query, getDoc, setDoc } from "firebase/firestore";
+import SearchIcon from '@mui/icons-material/Search';
 
 export default function Home() {
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");  // State for search query
 
   // Function to update inventory
   const updateInventory = async () => {
@@ -62,6 +64,11 @@ export default function Home() {
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  // Filter inventory based on search query
+  const filteredInventory = inventory.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <Container maxWidth="md">
@@ -127,6 +134,23 @@ export default function Home() {
           Add New Item
         </Button>
 
+        {/* Search Bar */}
+        <TextField
+          variant="outlined"
+          placeholder="Search items..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          fullWidth
+          sx={{ mb: 3 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
+
         {/* Inventory Items Display */}
         <Paper elevation={3} sx={{ width: '100%', mt: 3 }}>
           <Box
@@ -139,7 +163,7 @@ export default function Home() {
             </Typography>
           </Box>
           <Stack spacing={2} sx={{ p: 2, maxHeight: 500, overflow: 'auto' }}>
-            {inventory.map(({ name, quantity }) => (
+            {filteredInventory.map(({ name, quantity }) => (
               <Box
                 key={name}
                 display="flex"
